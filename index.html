@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Course Schedule Table</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
+    <style>
+        body { 
+            background-color: #f8f9fa; 
+            padding: 20px; 
+        }
+        .sidebar-filters { 
+            background: #ffffff; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+            border: 1px solid #dee2e6;
+        }
+        .table-container {
+            background: #ffffff; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #dee2e6;
+        }
+        .description { 
+            margin-bottom: 25px; 
+            color: #444; 
+            line-height: 1.5; 
+        }
+        .filter-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+        .dataTables_filter {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        #exportCsvBtn, #addToCalendarBtn {
+            white-space: nowrap;
+        }
+
+        /* Course-prefix color coding */
+        #courseTable tbody tr.row-envs > td { background-color: #e6f4ea !important; border-left: 5px solid #2e7d32; }
+        #courseTable tbody tr.row-henv > td { background-color: #efe7e0 !important; border-left: 5px solid #6d4c33; }
+        #courseTable tbody tr.row-geog > td { background-color: #e3f0fc !important; border-left: 5px solid #1565c0; }
+        #courseTable tbody tr.row-urbs > td { background-color: #f7e6ea !important; border-left: 5px solid #800020; }
+        #courseTable.table-hover tbody tr.row-envs:hover > td { background-color: #d0ead9 !important; }
+        #courseTable.table-hover tbody tr.row-henv:hover > td { background-color: #e3d5c8 !important; }
+        #courseTable.table-hover tbody tr.row-geog:hover > td { background-color: #cbe3f7 !important; }
+        #courseTable.table-hover tbody tr.row-urbs:hover > td { background-color: #f0d0d8 !important; }
+        #courseTable tbody tr > td:first-child { border-left-width: 5px; }
+
+        .color-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+        }
+        .color-legend .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .color-legend .swatch {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="container-fluid">
+    
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2 class="mb-3">GPE Course Schedule Tool 2026-2027&nbsp;</h2>
+            <p class="description">
+                This tool is designed to assist you when searching for courses. You can use the filter functionality on the left to narrow your search by <i><b>Course, Days &amp; Times, Room, Instructor, Term, and Class</b></i>.
+            </p>
+            <div class="color-legend">
+                <span class="legend-item"><span class="swatch" style="background:#2e7d32;"></span> ENVS</span>
+                <span class="legend-item"><span class="swatch" style="background:#6d4c33;"></span> HENV</span>
+                <span class="legend-item"><span class="swatch" style="background:#1565c0;"></span> GEOG</span>
+                <span class="legend-item"><span class="swatch" style="background:#800020;"></span> URBS</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-3 col-lg-2">
+            <div class="sidebar-filters sticky-top" style="top: 20px;">
+                <h4 class="mb-4">Filters</h4>
+                
+                <div class="mb-3">
+                    <label for="courseFilter" class="form-label filter-label">Course:</label>
+                    <select id="courseFilter" class="form-select filter-dropdown" data-column="0">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="daysFilter" class="form-label filter-label">Days &amp; Times:</label>
+                    <select id="daysFilter" class="form-select filter-dropdown" data-column="2">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="roomFilter" class="form-label filter-label">Room:</label>
+                    <select id="roomFilter" class="form-select filter-dropdown" data-column="3">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="instructorFilter" class="form-label filter-label">Instructor:</label>
+                    <select id="instructorFilter" class="form-select filter-dropdown" data-column="4">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="termFilter" class="form-label filter-label">Term:</label>
+                    <select id="termFilter" class="form-select filter-dropdown" data-column="6">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="classFilter" class="form-label filter-label">Class:</label>
+                    <select id="classFilter" class="form-select filter-dropdown" data-column="7">
+                        <option value="">All</option>
+                    </select>
+                </div>
+
+                <hr class="my-4">
+                <button class="btn btn-outline-primary w-100" onclick="resetFilters()">Reset Filters</button>
+            </div>
+        </div>
+
+        <div class="col-md-9 col-lg-10">
+            <div class="table-container table-responsive">
+                <table id="courseTable" class="table table-striped table-hover table-bordered w-100">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Course</th>
+                            <th>Section</th>
+                            <th>Days &amp; Times</th>
+                            <th>Room</th>
+                            <th>Instructor</th>
+                            <th>Meeting Dates</th>
+                            <th>Term</th>
+                            <th>Class</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer style="text-align: right; margin-top: 20px; font-size: 0.8em; color: #777;">
+        <time datetime="2026-07-08">Updated Jul 8, 2026 Ver 2.1</time>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        // FULL 165-ROW DATASET EXTRACTED FROM CSV
+        const tableData = [["ENVS 601","AA-SEM","Tu 5:45PM-8:15PM","H 1271 SGW","THIBAUD HENIN","09/08/2026-04/12/2027","Fall/Winter 2026-27",1081],["ENVS 604","A-LEC","Mo 2:45PM-5:30PM","H 1267 SGW","GEOFFREY GARVER","09/08/2026-12/07/2026","Fall 2026",1978],["ENVS 608","AA-WKS","TBA","TBA","To be Announced","05/11/2026-06/22/2026","Summer 2026",3196],["ENVS 608","CA-WKS","TBA","TBA","To be Announced","07/02/2026-08/12/2026","Summer 2026",3197],["ENVS 608","AA-WKS","TBA","TBA","To be Announced","09/08/2026-12/07/2026","Fall 2026",5977],["ENVS 608","A-WKS","TBA","TBA","To be Announced","09/08/2026-04/12/2027","Fall/Winter 2026-27",1503],["ENVS 608","BB-WKS","TBA","TBA","To be Announced","01/11/2027-04/12/2027","Winter 2027",4412],["ENVS 610","BA-PRA","TBA","TBA","Staff","05/11/2026-08/12/2026","Summer 2026",4417],["ENVS 610","A-PRA","TBA","TBA","To be Announced","09/08/2026-12/07/2026","Fall 2026",8912],["ENVS 610","B-PRA","TBA","TBA","To be Announced","01/11/2027-04/12/2027","Winter 2027",6596],["GEOG 203","A-LEC","TuTh 4:15PM-5:30PM","MB 1.210 SGW","Monica Mulrennan","01/11/2027-04/12/2027","Winter 2027",7782],["GEOG 204","A-LEC","Fr 5:45PM-8:15PM","MB 1.210 SGW","Pierre Deslauriers","09/08/2026-12/07/2026","Fall 2026",10478],["GEOG 210","AA-LEC","TBA","TBA","Craig Townsend","05/11/2026-06/22/2026","Summer 2026",5156],["GEOG 210","A-LEC","MoWe 1:15PM-2:30PM","H 110 SGW","Nalini Mohabir","09/08/2026-12/07/2026","Fall 2026",10479],["GEOG 220","A-LEC","MoWe 2:45PM-4:00PM","H 110 SGW","Huda Hassan","09/08/2026-12/07/2026","Fall 2026",10645],["GEOG 220","A-LEC","MoWe 11:45AM-1:00PM","MB 1.210 SGW","To be Announced","01/11/2027-04/12/2027","Winter 2027",2157],["GEOG 260","X-LEC","TuTh 10:15AM-11:30AM","H 411 SGW","Thomas McGurk","01/11/2027-04/12/2027","Winter 2027",7977],["GEOG 260","XA-LAB","Tu 11:45AM-1:00PM","H 1271 SGW","Thomas McGurk","01/11/2027-04/12/2027","Winter 2027",2160],["GEOG 260","X B-LAB","Tu 1:15PM-2:30PM","H 1271 SGW","Thomas McGurk","01/11/2027-04/12/2027","Winter 2027",2158],["GEOG 260","X C-LAB","Th 11:45AM-1:00PM","H 1271 SGW","Thomas McGurk","01/11/2027-04/12/2027","Winter 2027",2159],["GEOG 264","X-LEC","MoWe 4:15PM-5:30PM","H 509 SGW","Jeannine Marie St-Jacques","01/11/2027-04/12/2027","Winter 2027",2159],["GEOG 264","XA-LAB","Mo 5:45PM-7:00PM","H 1254 SGW","Jeannine Marie St-Jacques","01/11/2027-04/12/2027","Winter 2027",7784],["GEOG 264","X B-LAB","We 5:45PM-7:00PM","H 1254 SGW","Jeannine Marie St-Jacques","01/11/2027-04/12/2027","Winter 2027",7785],["GEOG 272","A-LEC","MoWe 4:15PM-5:30PM","H 937 SGW","Ricardo Duenez","09/08/2026-12/07/2026","Fall 2026",10480],["GEOG 274","A-LEC","MoWe 8:45AM-10:00AM","H 937 SGW","To be Announced","01/11/2027-04/12/2027","Winter 2027",8052],["GEOG 290","Y-LEC","MoWe 10:15AM-11:30AM","H 411 SGW","Kevin Gould","01/11/2027-04/12/2027","Winter 2027",7787],["GEOG 290","Y A-TUT","Mo 11:45AM-1:00PM","FB S133 SGW","Kevin Gould","01/11/2027-04/12/2027","Winter 2027",7788],["GEOG 290","Y B-TUT","Mo 1:15PM-2:30PM","FB S150 SGW","Kevin Gould","01/11/2027-04/12/2027","Winter 2027",7789],["GEOG 290","Y C-TUT","We 1:15PM-2:30PM","H 562 SGW","Kevin Gould","01/11/2027-04/12/2027","Winter 2027",7978],["GEOG 310","A-LEC","TuTh 1:15PM-2:30PM","LS 108 SGW","To be Announced","09/08/2026-12/07/2026","Fall 2026",6558],["GEOG 315","A-LEC","Fr 10:15AM-1:00PM","LS 205 SGW","Ted Rutland","01/11/2027-04/12/2027","Winter 2027",5062],["GEOG 323","A-LEC","WeFr 2:45PM-4:00PM","LS 207 SGW","Erik Chevrier","09/08/2026-12/07/2026","Fall 2026",9396],["GEOG 330","A-LEC","MoWe 4:15PM-5:30PM","H 820 SGW","Huda Hassan","11/01/2027-04/12/2027","Winter 2027",4008],["GEOG 342","A-LEC","We 2:45PM-5:30PM","H 1011 SGW","Katie Young","01/11/2027-04/12/2027","Winter 2027",8162],["GEOG 361","A-LEC","MoWe 4:15PM-5:30PM","H 561 SGW","Jochen Jaeger","09/08/2026-12/07/2026","Fall 2026",2171],["GEOG 362","X-LEC","Mo 8:45AM-11:30AM","H 535 SGW","Sabrina Giovanniello","01/11/2027-04/12/2027","Winter 2027",2163],["GEOG 362","X A-LAB","We 2:45PM-4:00PM","H 527 SGW","Sabrina Giovanniello","01/11/2027-04/12/2027","Winter 2027",2164],["GEOG 362","X B-LAB","Fr 1:15PM-2:30PM","H 1254 SGW","Sabrina Giovanniello","01/11/2027-04/12/2027","Winter 2027",2165],["GEOG 362","X C-LAB","Fr 2:45PM-4:00PM","H 1254 SGW","Sabrina Giovanniello","01/11/2027-04/12/2027","Winter 2027",7791],["GEOG 362","X D-LAB","Fr 4:15PM-5:30PM","H 1254 SGW","Sabrina Giovanniello","01/11/2027-04/12/2027","Winter 2027",7792],["GEOG 363","X-LEC","MoWe 10:15AM-1:00PM","H 1271 SGW","Ali Esmaeily","05/11/2026-06/22/2026","Summer 2026",1501],["GEOG 363","X A-LAB","MoWe 1:15PM-2:30PM","H 1254 SGW","Ali Esmaeily","05/11/2026-06/22/2026","Summer 2026",4966],["GEOG 363","X-LEC","TuTh 8:45AM-10:00AM","H 411 SGW","Angela Kross","09/08/2026-12/07/2026","Fall 2026",2173],["GEOG 363","X A-LAB","Tu 10:15AM-11:30AM","H 1254 SGW","Angela Kross","09/08/2026-12/07/2026","Fall 2026",2174],["GEOG 363","X B-LAB","Th 10:15AM-11:30AM","H 1254 SGW","Angela Kross","09/08/2026-12/07/2026","Fall 2026",2172],["GEOG 363","X-LEC","TuTh 4:15PM-5:30PM","H 411 SGW","Donny Seto","01/11/2027-04/12/2027","Winter 2027",2167],["GEOG 363","X A-LAB","Tu 5:45PM-7:00PM","H 1254 SGW","Donny Seto","01/11/2027-04/12/2027","Winter 2027",2168],["GEOG 363","X B-LAB","Th 5:45PM-7:00PM","H 1254 SGW","Donny Seto","01/11/2027-04/12/2027","Winter 2027",2166],["GEOG 371","A-LEC","TuTh 10:15AM-11:30AM","H 1011 SGW","Jochen Jaeger","01/11/2027-04/12/2027","Winter 2027",2169],["GEOG 375","A-LEC","TuTh 2:45PM-4:00PM","H 1271 SGW","Pascale Biron","09/08/2026-12/07/2026","Fall 2026",9367],["GEOG 377","X-LEC","Mo 1:15PM-4:00PM","H 1271 SGW","Pascale Biron","01/11/2027-04/12/2027","Winter 2027",7794],["GEOG 377","XA-LAB","We 1:15PM-4:00PM","H 1271 SGW","Pascale Biron","01/11/2027-04/12/2027","Winter 2027",7795],["GEOG 378","X-LEC","TuTh 11:45AM-1:00PM","MB S1.435 SGW","Jeannine Marie St-Jacques","01/11/2027-04/12/2027","Winter 2027",5678],["GEOG 378","X A-LAB","Th 1:15PM-2:30PM","H 1254 SGW","Jeannine Marie St-Jacques","01/11/2027-04/12/2027","Winter 2027",5679],["GEOG 380","A-LEC","Fr 10:15AM-1:00PM","LS 105 SGW","Bengi Akbulut","09/08/2026-12/07/2026","Fall 2026",9368],["GEOG 398","AA-LEC","Th 5:45PM-8:15PM","H 562 SGW","Katie Young","01/11/2027-04/12/2027","Winter 2027",7796],["GEOG 398","B-LEC","TBA","TBA","Staff","TBA","Winter 2027",7068],["GEOG 398","C-LEC","TuTh 1:15PM-2:30PM","LS 205 SGW","Huda Hassan","01/11/2027-04/12/2027","Winter 2027",8005],["GEOG 407","A-SEM","Tu 10:15AM-1:00PM","H 1267 SGW","Emanuel P Lowi","09/08/2026-12/07/2026","Fall 2026",10488],["GEOG 418","A-SEM","TuTh 2:45PM-5:30PM","H 1252 SGW","Nalini Mohabir","05/11/2026-06/22/2026","Summer 2026",4985],["GEOG 418","A-SEM","We 1:15PM-4:00PM","FB S133 SGW","Kevin Gould","01/11/2027-04/12/2027","Winter 2027",6471],["GEOG 430","A-LEC","Tu 1:15PM-4:00PM","MB 2.255 SGW","To be Announced","01/11/2027-04/12/2027","Winter 2027",3739],["GEOG 458","A-SEM","We 11:45AM-2:30PM","CL 215 SGW","Ricardo Duenez","01/11/2027-04/12/2027","Winter 2027",2170],["GEOG 463","X-LEC","WeFr 10:15AM-11:30AM","H 1271 SGW","Donny Seto","09/08/2026-12/07/2026","Fall 2026",5183],["GEOG 463","X A-LAB","WeFr 11:45AM-1:00PM","H 1254 SGW","Donny Seto","09/08/2026-12/07/2026","Fall 2026",5184],["GEOG 463","X-LEC","MoWe 1:15PM-2:30PM","H 1267 SGW","Angela Kross","01/11/2027-04/12/2027","Winter 2027",3740],["GEOG 463","X A-LAB","MoWe 2:45PM-4:00PM","H 1254 SGW","Angela Kross","01/11/2027-04/12/2027","Winter 2027",3741],["GEOG 464","A-LAB","Fr 2:45PM-5:30PM","H 1254 SGW","LUKE RUSSELL","09/08/2026-12/07/2026","Fall 2026",9370],["GEOG 464","X-LEC","We 2:45PM-5:30PM","H 1252 SGW","LUKE RUSSELL","09/08/2026-12/07/2026","Fall 2026",9369],["GEOG 465","X-LEC","MoWe 8:45AM-10:00AM","H 1254 SGW","Angela Kross","01/11/2027-04/12/2027","Winter 2027",3993],["GEOG 465","X A-LAB","MoWe 10:15AM-11:30AM","H 1254 SGW","Angela Kross","01/11/2027-04/12/2027","Winter 2027",4009],["GEOG 466","X-SEM","Tu 1:15PM-4:00PM","H 1267 SGW","Sebastien Caquard","09/08/2026-12/07/2026","Fall 2026",6297],["GEOG 466","XA-LAB","Th 1:15PM-4:00PM","H 1254 SGW","Sebastien Caquard","09/08/2026-12/07/2026","Fall 2026",6296],["GEOG 478","A-SEM","Tu 10:15AM-1:00PM","H 1267 SGW","Donny Seto","01/11/2027-04/12/2027","Winter 2027",2171],["GEOG 479","A-SEM","Tu 10:15AM-1:00PM","H 1252 SGW","Sarah Turner","09/08/2026-12/07/2026","Fall 2026",10509],["GEOG 480","A-SEM","Th 5:45PM-8:15PM","H 1267 SGW","Bengi Akbulut","01/11/2027-04/12/2027","Winter 2027",7067],["GEOG 485","A-SEM","We 5:45PM-8:15PM","H 1267 SGW","Nalini Mohabir","09/08/2026-12/07/2026","Fall 2026",6913],["GEOG 490","AA-REA","Mo 5:45PM-8:15PM","H 1252 SGW","To be Announced","09/08/2026-04/12/2027","Fall/Winter 2026-27",1448],["GEOG 491","A-SEM","Fr 1:15PM-4:00PM","H 1269 SGW","Sarah Turner","09/08/2026-04/12/2027","Fall/Winter 2026-27",1111],["GEOG 620","X-LEC","WeFr 10:15AM-11:30AM","H 1271 SGW","Donny Seto","09/08/2026-12/07/2026","Fall 2026",5253],["GEOG 620","X A-LAB","WeFr 11:45AM-1:00PM","H 1254 SGW","Donny Seto","09/08/2026-12/07/2026","Fall 2026",5255],["GEOG 620","X-LEC","MoWe 1:15PM-2:30PM","H 1267 SGW","Angela Kross","01/11/2027-04/12/2027","Winter 2027",3742],["GEOG 620","XA-LAB","MoWe 2:45PM-4:00PM","H 1254 SGW","Angela Kross","01/11/2027-04/12/2027","Winter 2027",3743],["GEOG 625","BA-REA","TBA","TBA","To be Announced","05/11/2026-06/22/2026","Summer 2026",1503],["GEOG 625","CA-REA","TBA","TBA","To be Announced","07/02/2026-08/12/2026","Summer 2026",3198],["GEOG 625","AA-REA","TBA","TBA","To be Announced","09/08/2026-12/07/2026","Fall 2026",2175],["GEOG 625","AA-REA","TBA","TBA","To be Announced","01/11/2027-04/12/2027","Winter 2027",2173],["GEOL 210","X-LEC","TuTh 8:45AM-10:00AM","LS 207 SGW","Souad Guernina","09/08/2026-12/07/2026","Fall 2026",6573],["GEOL 210","X A-LAB","Tu 10:15AM-11:30AM","H 1271 SGW","Souad Guernina","09/08/2026-12/07/2026","Fall 2026",6574],["URBS 230","A-LEC","MoWe 8:45AM-10:00AM","H 110 SGW","Donny Seto","09/08/2026-12/07/2026","Fall 2026",5976],["URBS 230","A-LEC","MoWe 10:15AM-11:30AM","H 110 SGW","Donny Seto","01/11/2027-04/12/2027","Winter 2027",4734],["URBS 240","X-LEC","MoWe 10:15AM-11:30AM","MB S2.330 SGW","Pierre Gauthier","01/11/2027-04/12/2027","Winter 2027",4567],["URBS 240","XA-TUT","Mo 4:00PM-5:30PM","LS 105 SGW","Pierre Gauthier","01/11/2027-04/12/2027","Winter 2027",6474],["URBS 240","X B-TUT","We 4:00PM-5:30PM","H 670 SGW","Pierre Gauthier","01/11/2027-04/12/2027","Winter 2027",4565],["URBS 240","X C-TUT","Fr 4:00PM-5:30PM","FB S133 SGW","Pierre Gauthier","01/11/2027-04/12/2027","Winter 2027",7979],["URBS 250","X-LEC","MoWe 2:45PM-4:00PM","MB S2.330 SGW","Thomas McGurk","09/08/2026-12/07/2026","Fall 2026",8698],["URBS 250","X A-LAB","Mo 4:15PM-5:30PM","H 1271 SGW","Thomas McGurk","09/08/2026-12/07/2026","Fall 2026",8699],["URBS 250","X B-LAB","We 5:45PM-7:00PM","H 1271 SGW","Thomas McGurk","09/08/2026-12/07/2026","Fall 2026",8700],["URBS 250","X C-LAB","We 4:15PM-5:30PM","H 1271 SGW","Thomas McGurk","09/08/2026-12/07/2026","Fall 2026",8701],["URBS 260","X-LEC","TuTh 10:15AM-11:30AM","H 435 SGW","Leila Ghaffari","01/11/2027-04/12/2027","Winter 2027",6475],["URBS 260","X A-LAB","Tu 11:45AM-1:00PM","H 423 SGW","Leila Ghaffari","01/11/2027-04/12/2027","Winter 2027",6476],["URBS 260","X B-LAB","Th 11:45AM-1:00PM","H 621 SGW","Leila Ghaffari","01/11/2027-04/12/2027","Winter 2027",6477],["URBS 300","AA-LEC","We 5:45PM-8:15PM","H 420 SGW","Silvano De La Llata","01/11/2027-04/12/2027","Winter 2027",3124],["URBS 310","A-LEC","MoWe 2:45PM-5:30PM","H 920 SGW","Craig Townsend","05/11/2026-06/22/2026","Summer 2026",4976],["URBS 333","X-LEC","Tu 10:15AM-1:00PM","ER 1442.15 SGW","Silvano De La Llata","09/08/2026-04/12/2027","Fall/Winter 2026-27",1290],["URBS 333","XA-LAB","Tu 1:15PM-4:00PM","ER 1442.15 SGW","Silvano De La Llata","09/08/2026-04/12/2027","Fall/Winter 2026-27",1289],["URBS 335","X-LEC","MoWe 10:15AM-1:00PM","H 1271 SGW","Ali Esmaeily","05/11/2026-06/22/2026","Summer 2026",2766],["URBS 335","XA-LAB","MoWe 1:15PM-2:30PM","H 1254 SGW","Ali Esmaeily","05/11/2026-06/22/2026","Summer 2026",2767],["URBS 335","X-LEC","TuTh 8:45AM-10:00AM","H 411 SGW","Angela Kross","09/08/2026-12/07/2026","Fall 2026",4564],["URBS 335","X A-LAB","Tu 10:15AM-11:30AM","H 1254 SGW","Angela Kross","09/08/2026-12/07/2026","Fall 2026",4565],["URBS 335","X B-LAB","Th 10:15AM-11:30AM","H 1254 SGW","Angela Kross","09/08/2026-12/07/2026","Fall 2026",4566],["URBS 335","X-LEC","TuTh 4:15PM-5:30PM","H 411 SGW","Donny Seto","01/11/2027-04/12/2027","Winter 2027",3125],["URBS 335","X A-LAB","Tu 5:45PM-7:00PM","H 1254 SGW","Donny Seto","01/11/2027-04/12/2027","Winter 2027",3127],["URBS 335","X B-LAB","Th 5:45PM-7:00PM","H 1254 SGW","Donny Seto","01/11/2027-04/12/2027","Winter 2027",3126],["URBS 337","A-LEC","WeFr 2:45PM-4:00PM","LS 207 SGW","Erik Chevrier","09/08/2026-12/07/2026","Fall 2026",9372],["URBS 362","X-LEC","Mo 8:45AM-11:30AM","H 535 SGW","Sabrina Giovanniello","01/11/2027-04/12/2027","Winter 2027",7821],["URBS 362","X A-LAB","We 2:45PM-4:00PM","H 527 SGW","Sabrina Giovanniello","01/11/2027-04/12/2027","Winter 2027",7822],["URBS 362","X B-LAB","Fr 1:15PM-2:30PM","H 1254 SGW","Sabrina Giovanniello","01/11/2027-04/12/2027","Winter 2027",7823],["URBS 362","X C-LAB","Fr 2:45PM-4:00PM","H 1254 SGW","Sabrina Giovanniello","01/11/2027-04/12/2027","Winter 2027",7824],["URBS 362","X D-LAB","Fr 4:15PM-5:30PM","H 1254 SGW","Sabrina Giovanniello","01/11/2027-04/12/2027","Winter 2027",7825],["URBS 370","A-LEC","MoWe 1:15PM-2:30PM","LS 207 SGW","Leila Ghaffari","09/08/2026-12/07/2026","Fall 2026",9376],["URBS 380","A-LEC","MoWe 4:15PM-5:30PM","LS 208 SGW","Norma Rantisi","09/08/2026-12/07/2026","Fall 2026",10515],["URBS 393","A-LEC","MoWe 11:45AM-1:00PM","LS 107 SGW","Amy Twigge-Molecey","01/11/2027-04/12/2027","Winter 2027",3994],["URBS 420","B-SEM","Tu 1:15PM-4:00PM","MB 2.255 SGW","To be Announced","01/11/2027-04/12/2027","Winter 2027",3128],["URBS 433","X-LEC","Th 8:45AM-11:30AM","ER 1442.15 SGW","Pierre Gauthier","09/08/2026-04/12/2027","Fall/Winter 2026-27",1292],["URBS 433","XA-LAB","Th 11:45AM-2:30PM","ER 1442.15 SGW","Pierre Gauthier","09/08/2026-04/12/2027","Fall/Winter 2026-27",1291],["URBS 440","A-SEM","Tu 1:15PM-4:00PM","ER 1428 SGW","Ted Rutland","09/08/2026-12/07/2026","Fall 2026",9377],["URBS 450","A-SEM","We 5:45PM-8:15PM","MB 2.265 SGW","Norma Rantisi","01/11/2027-04/12/2027","Winter 2027",7826],["URBS 460","A-SEM","MoWe 1:15PM-2:30PM","ER 1428 SGW","Pierre Gauthier","09/08/2026-12/07/2026","Fall 2026",10517],["URBS 470","A-SEM","TuTh 4:15PM-5:30PM","FB S150 SGW","Craig Townsend","01/11/2027-04/12/2027","Winter 2027",8006],["URBS 475","A-SEM","TuTh 10:15AM-1:00PM","H 1267 SGW","Alexandra Lesnikowski","05/11/2026-06/22/2026","Summer 2026",4977],["URBS 480","A-SEM","We 11:45AM-2:30PM","CL 215 SGW","Ricardo Duenez","01/11/2027-04/12/2027","Winter 2027",7827],["URBS 481","A-LEC","Mo 2:45PM-5:30PM","H 1252 SGW","Jacob Baby","09/08/2026-12/07/2026","Fall 2026",10713],["URBS 483","AA-CON","Mo 5:45PM-8:15PM","H 1252 SGW","To be Announced","09/08/2026-04/12/2027","Fall/Winter 2026-27",1293],["URBS 490","A-SEM","TuTh 10:15AM-1:00PM","ER 1428 SGW","Silvano De La Llata","07/02/2026-08/12/2026","Summer 2026",3118],["URBS 491","AA-SEM","Fr 1:15PM-4:00PM","H 1269 SGW","Sarah Turner","09/08/2026-04/12/2027","Fall/Winter 2026-27",1294],["URBS 498","A-LEC","Tu 10:15AM-1:00PM","ER 1428 SGW","Leila Ghaffari","09/08/2026-12/07/2026","Fall 2026",10519],["HENV 610","A-SEM 12 Wk","Tu 4:15PM- 5:30PM","H 1269 SGW","Jeannine Marie St-Jacques","09/08/2026-12/07/2026","Fall 2026",8091],["HENV 610","X A-LAB 12 Wk","Th 4:15PM - 5:30PM","H 1269 SGW","Jeannine Marie St-Jacques","09/08/2026-12/07/2026","Fall 2026",8279],["HENV 615","A-SEM 24 Wk","Fr 9:00AM - 12:00PM","H 1267 SGW","H. Damon Matthews, Alexandra Lesnikowski","09/08/2026-04/12/2027","Fall/Winter 2026-27",1112],["HENV 650","A-SEM 12 Wk","Tu 2:45PM - 5:30PM","H 1269 SGW","Norma Rantisi","01/11/2027-04/12/2027","Winter 2027",7820],["HENV 670","A-SEM 12 Wk","Tu 1:15PM- 4:00PM","H 1252 SGW","Bengi Akbulut","09/08/2026-12/07/2026","Fall 2026",9371],["HENV 680","A-SEM 12 Wk","Tu 1:15PM - 4:00PM","H 1267 SGW","ZAV KOTHAVALA","01/11/2027-04/12/2027","Winter 2027",5681],["HENV 685","BA-REA 6 Wk 2","TBA","TBA","To be Announced","07/02/2026-08/12/2026","Summer 2026",2935],["HENV 685","AA-REA 12 Wk","TBA","TBA","To be Announced","09/08/2026-12/07/2026","Fall 2026",2181],["HENV 685","AA-REA 12 Wk","TBA","TBA","To be Announced","01/11/2027-04/12/2027","Winter 2027",2176],["HENV 690","A-SEM 12 Wk","We 10:15AM- 1:00PM","H 1269 SGW","Ted Rutland","09/08/2026-12/07/2026","Fall 2026",10512],["HENV 695","AA-REA 6 Wk 1","TBA","TBA","To be Announced","05/11/2026-06/22/2026","Summer 2026",2945],["HENV 695","AA-REA 12 Wk","TBA","TBA","To be Announced","09/08/2026-12/07/2026","Fall 2026",2182],["HENV 695","BB-REA 12 Wk","TBA","TBA","To be Announced","01/11/2027-04/12/2027","Winter 2027",2177],["HENV 801","BA-MOD 12 Wk","TBA","TBA","To be Announced","05/11/2026-08/12/2026","Summer 2026",3203],["HENV 801","A-MOD 12 Wk","TBA","TBA","To be Announced","09/08/2026-12/07/2026","Fall 2026",6147],["HENV 801","B-MOD 12 Wk","TBA","TBA","To be Announced","01/11/2027-04/12/2027","Winter 2027",4424],["HENV 802","BA-IND 12 Wk","TBA","TBA","To be Announced","05/11/2026-08/12/2026","Summer 2026",3436],["HENV 802","A-IND 12 Wk","TBA","TBA","To be Announced","09/08/2026-12/07/2026","Fall 2026",6674],["HENV 802","B-IND 12 Wk","TBA","TBA","To be Announced","01/11/2027-04/12/2027","Winter 2027",4866],["HENV 805","A-SEM 24 Wk","Fr 9:00AM - 12:00PM","H 1267 SGW","H. Damon Matthews, Alexandra Lesnikowski","09/08/2026-04/12/2027","Fall/Winter 2026-27",1461],["HENV 810","BA-THE 12 Wk","TBA","TBA","To be Announced","05/11/2026-08/12/2026","Summer 2026",3208],["HENV 810","A-THE 12 Wk","TBA","TBA","To be Announced","09/08/2026-12/07/2026","Fall 2026",6221],["HENV 810","B-THE 12 Wk","TBA","TBA","To be Announced","01/11/2027-04/12/2027","Winter 2027",4459],["HENV 885","BA-IND 12 Wk","TBA","TBA","To be Announced","05/11/2026-08/12/2026","Summer 2026",3209],["HENV 885","A-IND 12 Wk","TBA","TBA","To be Announced","09/08/2026-12/07/2026","Fall 2026",6222],["HENV 885","B-IND 12 Wk","TBA","TBA","To be Announced","01/11/2027-04/12/2027","Winter 2027",4460],["HENV 895","BA-THE 12 Wk","TBA","TBA","To be Announced","05/11/2026-08/12/2026","Summer 2026",3344],["HENV 895","A-THE 12 Wk","TBA","TBA","To be Announced","09/08/2026-12/07/2026","Fall 2026",6392]];
+
+        // ---- Course-prefix color coding config ----
+        var PREFIX_COLORS = {
+            'ENVS': { rowClass: 'row-envs', icsColor: 'green' },
+            'HENV': { rowClass: 'row-henv', icsColor: 'brown' },
+            'GEOG': { rowClass: 'row-geog', icsColor: 'blue' },
+            'URBS': { rowClass: 'row-urbs', icsColor: 'maroon' }
+        };
+        var PREFIX_ROW_CLASS = {
+            'ENVS': 'row-envs',
+            'HENV': 'row-henv',
+            'GEOG': 'row-geog',
+            'URBS': 'row-urbs'
+        };
+        function getCoursePrefix(course) {
+            return (course || '').trim().split(' ')[0].toUpperCase();
+        }
+
+        $(document).ready(function() {
+            var table = $('#courseTable').DataTable({
+                data: tableData, // Use the embedded JSON array directly
+                pageLength: 15,
+                autoWidth: false,
+                createdRow: function(row, data, dataIndex) {
+                    // Color-code each row by course prefix (ENVS/HENV/GEOG/URBS)
+                    var prefix = getCoursePrefix(data[0]);
+                    var rowClass = PREFIX_ROW_CLASS[prefix];
+                    if (rowClass) {
+                        $(row).addClass(rowClass);
+                    }
+                },
+                initComplete: function() {
+                    // Insert Export CSV and Add to Calendar buttons right next to the DataTables search field
+                    var filterDiv = $('#courseTable_filter');
+                    filterDiv.append(
+                        '<button type="button" id="exportCsvBtn" class="btn btn-success btn-sm">⬇ Export CSV</button>'
+                    );
+                    filterDiv.append(
+                        '<button type="button" id="addToCalendarBtn" class="btn btn-primary btn-sm">📅 Add to Calendar</button>'
+                    );
+                    $('#exportCsvBtn').on('click', exportTableToCSV);
+                    $('#addToCalendarBtn').on('click', exportCalendarICS);
+                }
+            });
+
+            // Populate the specific Dropdowns on the left sidebar
+            $('.filter-dropdown').each(function() {
+                var columnIdx = $(this).data('column');
+                var select = $(this);
+                
+                // Extract unique data from the targeted column and sort it
+                var uniqueValues = table.column(columnIdx).data().unique().sort();
+                
+                uniqueValues.each(function(d) {
+                    if (d && String(d).trim() !== "") {
+                        select.append('<option value="' + d + '">' + d + '</option>');
+                    }
+                });
+
+                // Add an event listener to trigger the search on change
+                select.on('change', function() {
+                    var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                    table.column(columnIdx)
+                         .search(val ? '^' + val + '$' : '', true, false)
+                         .draw();
+                });
+            });
+        });
+
+        function resetFilters() {
+            $('.filter-dropdown').val('').trigger('change');
+            var table = $('#courseTable').DataTable();
+            table.search('').columns().search('').draw();
+        }
+
+        function csvEscape(field) {
+            var str = String(field === null || field === undefined ? "" : field);
+            if (/[",\n\r]/.test(str)) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        }
+
+        function exportTableToCSV() {
+            var table = $('#courseTable').DataTable();
+            // Respect whatever the user currently has filtered/searched for
+            var rows = table.rows({ search: 'applied' }).data();
+
+            if (rows.length === 0) {
+                alert("No results to export. Adjust your search or filters and try again.");
+                return;
+            }
+
+            var headers = ["Course", "Section", "Days & Times", "Room", "Instructor", "Meeting Dates", "Term", "Class"];
+            var csvRows = [headers];
+
+            for (var i = 0; i < rows.length; i++) {
+                csvRows.push(rows[i]);
+            }
+
+            var csvContent = csvRows.map(function(r) {
+                return r.map(csvEscape).join(',');
+            }).join('\r\n');
+
+            var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            var url = URL.createObjectURL(blob);
+            var link = document.createElement('a');
+            link.href = url;
+            link.download = 'course-schedule-export.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // =====================================================================
+        // Calendar (.ics) export
+        // Builds one recurring VEVENT per course meeting pattern, tagged with
+        // CATEGORIES + COLOR (RFC 7986) matching the on-page prefix color coding.
+        // Rows with TBA days/times or unparseable dates are skipped.
+        // =====================================================================
+
+        function icsParseTime(t) {
+            var m = t.match(/(\d{1,2}):(\d{2})(AM|PM)/i);
+            if (!m) return null;
+            var hour = parseInt(m[1], 10);
+            var minute = parseInt(m[2], 10);
+            var period = m[3].toUpperCase();
+            if (period === 'PM' && hour !== 12) hour += 12;
+            if (period === 'AM' && hour === 12) hour = 0;
+            return { hour: hour, minute: minute };
+        }
+
+        function icsParseDaysAndTime(str) {
+            str = (str || '').trim();
+            if (!str || str.toUpperCase() === 'TBA') return null;
+            var firstSpace = str.indexOf(' ');
+            if (firstSpace === -1) return null;
+            var dayPart = str.substring(0, firstSpace);
+            var timePart = str.substring(firstSpace + 1).replace(/\s+/g, '');
+            var dayMatches = dayPart.match(/Mo|Tu|We|Th|Fr|Sa|Su/g);
+            if (!dayMatches || dayMatches.length === 0) return null;
+            var timeParts = timePart.split('-');
+            if (timeParts.length !== 2) return null;
+            var startTime = icsParseTime(timeParts[0]);
+            var endTime = icsParseTime(timeParts[1]);
+            if (!startTime || !endTime) return null;
+            return { days: dayMatches, start: startTime, end: endTime };
+        }
+
+        function icsParseDateRange(str) {
+            str = (str || '').trim();
+            var m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})-(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (!m) return null;
+            var start = new Date(parseInt(m[3], 10), parseInt(m[1], 10) - 1, parseInt(m[2], 10));
+            var end = new Date(parseInt(m[6], 10), parseInt(m[4], 10) - 1, parseInt(m[5], 10));
+            return { start: start, end: end };
+        }
+
+        var ICS_DAY_NUM = { Su: 0, Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6 };
+        var ICS_DAY_CODE = { 0: 'SU', 1: 'MO', 2: 'TU', 3: 'WE', 4: 'TH', 5: 'FR', 6: 'SA' };
+
+        function icsFirstOccurrence(startDate, dayCodes) {
+            var targetDows = dayCodes.map(function(d) { return ICS_DAY_NUM[d]; });
+            var d = new Date(startDate.getTime());
+            for (var i = 0; i < 14; i++) {
+                if (targetDows.indexOf(d.getDay()) !== -1) return d;
+                d.setDate(d.getDate() + 1);
+            }
+            return startDate;
+        }
+
+        function icsNthSundayOfMonth(year, monthIndex, n) {
+            var d = new Date(year, monthIndex, 1);
+            var dayOfWeek = d.getDay();
+            var firstSunday = 1 + ((7 - dayOfWeek) % 7);
+            var day = firstSunday + (n - 1) * 7;
+            return new Date(year, monthIndex, day, 2, 0, 0);
+        }
+
+        function icsIsEasternDST(date) {
+            var year = date.getFullYear();
+            var marchSecondSunday = icsNthSundayOfMonth(year, 2, 2);
+            var novFirstSunday = icsNthSundayOfMonth(year, 10, 1);
+            return date >= marchSecondSunday && date < novFirstSunday;
+        }
+
+        function icsEasternToUTC(year, month, day, hour, minute) {
+            var localDate = new Date(year, month, day, hour, minute);
+            var offsetHours = icsIsEasternDST(localDate) ? 4 : 5;
+            return new Date(Date.UTC(year, month, day, hour + offsetHours, minute, 0));
+        }
+
+        function icsPad2(n) { return (n < 10 ? '0' : '') + n; }
+
+        function icsFormatLocalDateTime(year, month, day, hour, minute) {
+            return year + icsPad2(month + 1) + icsPad2(day) + 'T' + icsPad2(hour) + icsPad2(minute) + '00';
+        }
+
+        function icsFormatUTCDateTime(utcDate) {
+            return utcDate.getUTCFullYear() + icsPad2(utcDate.getUTCMonth() + 1) + icsPad2(utcDate.getUTCDate()) + 'T' +
+                   icsPad2(utcDate.getUTCHours()) + icsPad2(utcDate.getUTCMinutes()) + icsPad2(utcDate.getUTCSeconds()) + 'Z';
+        }
+
+        function icsEscapeText(str) {
+            return String(str || '')
+                .replace(/\\/g, '\\\\')
+                .replace(/;/g, '\\;')
+                .replace(/,/g, '\\,')
+                .replace(/\n/g, '\\n');
+        }
+
+        function icsFoldLine(line) {
+            if (line.length <= 75) return line;
+            var result = '';
+            var first = true;
+            while (line.length > 0) {
+                var chunkSize = first ? 75 : 74;
+                result += (first ? '' : '\r\n ') + line.substring(0, chunkSize);
+                line = line.substring(chunkSize);
+                first = false;
+            }
+            return result;
+        }
+
+        var ICS_VTIMEZONE_BLOCK = [
+            'BEGIN:VTIMEZONE',
+            'TZID:America/Toronto',
+            'BEGIN:DAYLIGHT',
+            'TZOFFSETFROM:-0500',
+            'TZOFFSETTO:-0400',
+            'TZNAME:EDT',
+            'DTSTART:19700308T020000',
+            'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU',
+            'END:DAYLIGHT',
+            'BEGIN:STANDARD',
+            'TZOFFSETFROM:-0400',
+            'TZOFFSETTO:-0500',
+            'TZNAME:EST',
+            'DTSTART:19701101T020000',
+            'RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU',
+            'END:STANDARD',
+            'END:VTIMEZONE'
+        ].join('\r\n');
+
+        var icsUidCounter = 0;
+
+        function icsBuildEvent(rowData) {
+            var course = rowData[0], section = rowData[1], daysTimes = rowData[2],
+                room = rowData[3], instructor = rowData[4], meetingDates = rowData[5],
+                term = rowData[6], classNum = rowData[7];
+
+            var schedule = icsParseDaysAndTime(daysTimes);
+            var dateRange = icsParseDateRange(meetingDates);
+            if (!schedule || !dateRange) return null; // TBA / unparseable rows are skipped
+
+            var prefix = getCoursePrefix(course);
+            var colorInfo = PREFIX_COLORS[prefix];
+
+            var firstDay = icsFirstOccurrence(dateRange.start, schedule.days);
+            var y = firstDay.getFullYear(), mo = firstDay.getMonth(), d = firstDay.getDate();
+
+            var dtStartLocal = icsFormatLocalDateTime(y, mo, d, schedule.start.hour, schedule.start.minute);
+            var dtEndLocal = icsFormatLocalDateTime(y, mo, d, schedule.end.hour, schedule.end.minute);
+
+            var untilUtc = icsEasternToUTC(dateRange.end.getFullYear(), dateRange.end.getMonth(), dateRange.end.getDate(), 23, 59);
+            var untilStr = icsFormatUTCDateTime(untilUtc);
+
+            var byday = schedule.days.map(function(dCode) { return ICS_DAY_CODE[ICS_DAY_NUM[dCode]]; }).join(',');
+
+            icsUidCounter++;
+            var uid = 'gpe-' + (classNum || icsUidCounter) + '-' + icsUidCounter + '@gpe-course-schedule';
+
+            var summary = course + ' ' + section;
+            var descLines = [];
+            if (instructor) descLines.push('Instructor: ' + instructor);
+            if (term) descLines.push('Term: ' + term);
+            if (classNum) descLines.push('Class #: ' + classNum);
+            var description = descLines.join('\\n');
+
+            var lines = [];
+            lines.push('BEGIN:VEVENT');
+            lines.push('UID:' + uid);
+            lines.push('DTSTAMP:' + icsFormatUTCDateTime(new Date()));
+            lines.push('DTSTART;TZID=America/Toronto:' + dtStartLocal);
+            lines.push('DTEND;TZID=America/Toronto:' + dtEndLocal);
+            lines.push('RRULE:FREQ=WEEKLY;BYDAY=' + byday + ';UNTIL=' + untilStr);
+            lines.push(icsFoldLine('SUMMARY:' + icsEscapeText(summary)));
+            if (room && room.toUpperCase() !== 'TBA') {
+                lines.push(icsFoldLine('LOCATION:' + icsEscapeText(room)));
+            }
+            if (description) {
+                lines.push(icsFoldLine('DESCRIPTION:' + description));
+            }
+            if (prefix) {
+                lines.push('CATEGORIES:' + prefix);
+            }
+            if (colorInfo) {
+                lines.push('COLOR:' + colorInfo.icsColor);
+            }
+            lines.push('END:VEVENT');
+            return lines.join('\r\n');
+        }
+
+        function exportCalendarICS() {
+            var table = $('#courseTable').DataTable();
+            var rows = table.rows({ search: 'applied' }).data();
+
+            if (rows.length === 0) {
+                alert("No results to export. Adjust your search or filters and try again.");
+                return;
+            }
+
+            var body = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//GPE Course Schedule Tool//EN',
+                'CALSCALE:GREGORIAN',
+                ICS_VTIMEZONE_BLOCK
+            ];
+
+            var included = 0, skipped = 0;
+            for (var i = 0; i < rows.length; i++) {
+                var vevent = icsBuildEvent(rows[i]);
+                if (vevent) {
+                    body.push(vevent);
+                    included++;
+                } else {
+                    skipped++;
+                }
+            }
+            body.push('END:VCALENDAR');
+
+            if (included === 0) {
+                alert("None of the filtered rows have a specific day/time and date range to schedule (they're all TBA). Nothing was exported.");
+                return;
+            }
+
+            var icsContent = body.join('\r\n');
+            var blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' });
+            var url = URL.createObjectURL(blob);
+            var link = document.createElement('a');
+            link.href = url;
+            link.download = 'course-schedule.ics';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            if (skipped > 0) {
+                alert(included + " course meeting(s) added to the calendar file. " + skipped + " row(s) were skipped because they had no specific day/time (TBA).");
+            }
+        }
+    </script>
+</body>
+</html>
